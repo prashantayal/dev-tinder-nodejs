@@ -1,7 +1,9 @@
-const express = require("express");
+import express = require("express");
 import type { Request, Response, NextFunction } from "express";
 
 const app = express();
+
+const { userAuth } = require("./middlewares/auth");
 
 interface UserQuery {
   userId?: string;
@@ -11,15 +13,12 @@ interface UserParams {
   password: string;
 }
 
-// Match all the HTTP method API calls to '/test'
-app.use("/test", (req: any, res: any) => {
-  res.send("Hey! 👋");
-});
+// MIDDLEWARE - generally created using use() so that the logic works for all type of requests
+app.use("/user", userAuth);
 
 // GET API call - only handle GET call to '/user'
-
 app.get(
-  "/user",
+  "/user/getData",
   (req: Request<{}, {}, {}, UserQuery>, res: Response, next: NextFunction) => {
     /*
     Request<{}, {}, {}, UserQuery> means:
@@ -41,30 +40,28 @@ app.get(
 
 // Fetching data from params
 app.get(
-  "/user/:userId/:password",
+  "/user/login/:userId/:password",
   (req: Request<UserParams>, res: Response) => {
     const { userId, password } = req.params;
     console.log("User ID:", userId); // "1001"
     console.log("Password:", password); // "pass1234"
 
-    res.json({ firstName: "Prashant", lastName: "Tayal" });
+    res.status(201).json({ firstName: "Prashant", lastName: "Tayal" });
   }
 );
 
 // POST API call - only handle POST call to '/user'
 app.post(
-  "/user",
-  (next: NextFunction) => {
-    // res.send("User data save successfully");
+  "/user/updateData",
+  (req: Request, res: Response, next: NextFunction) => {
+    next(); // pass to next middleware
+  },
+  (req: Request, res: Response, next: NextFunction) => {
+    // res.send("User data save successfully 2");
     next();
   },
-  (res: Response) => {
-    res.send("User data save successfully 2");
-    // next();
-  },
-  (res: Response) => {
+  (req: Request, res: Response) => {
     res.send("User data save successfully 3");
-    // next();
   }
   /* 
     - Will always handle the first handler.
@@ -84,7 +81,7 @@ app.post(
 );
 
 // DELETE API call
-app.delete("/user", (req: any, res: any) => {
+app.delete("/user/deleteData", (req: any, res: any) => {
   res.send("User data deleted successfully");
 });
 
