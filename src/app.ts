@@ -1,6 +1,15 @@
 const express = require("express");
+import type { Request, Response, NextFunction } from "express";
 
 const app = express();
+
+interface UserQuery {
+  userId?: string;
+}
+interface UserParams {
+  userId: string;
+  password: string;
+}
 
 // Match all the HTTP method API calls to '/test'
 app.use("/test", (req: any, res: any) => {
@@ -8,29 +17,52 @@ app.use("/test", (req: any, res: any) => {
 });
 
 // GET API call - only handle GET call to '/user'
-app.get("/user", (req: any, res: any) => {
-  console.log(req.query); // user?userId=1001
-  res.send({ firstName: "Prashant", lastName: "Tayal" });
-});
+
+app.get(
+  "/user",
+  (req: Request<{}, {}, {}, UserQuery>, res: Response, next: NextFunction) => {
+    /*
+    Request<{}, {}, {}, UserQuery> means:
+    No route params ({})
+    No enforced response type ({})
+    No request body ({})
+    Query string type = UserQuery
+  */
+
+    const { userId } = req.query;
+    console.log("User ID:", userId);
+
+    res.json({
+      firstName: "Prashant",
+      lastName: "Tayal",
+    });
+  }
+);
 
 // Fetching data from params
-app.get("/user/:userId/:password", (req: any, res: any) => {
-  console.log(req.params); // user/1001/pass1234
-  res.send({ firstName: "Prashant", lastName: "Tayal" });
-});
+app.get(
+  "/user/:userId/:password",
+  (req: Request<UserParams>, res: Response) => {
+    const { userId, password } = req.params;
+    console.log("User ID:", userId); // "1001"
+    console.log("Password:", password); // "pass1234"
+
+    res.json({ firstName: "Prashant", lastName: "Tayal" });
+  }
+);
 
 // POST API call - only handle POST call to '/user'
 app.post(
   "/user",
-  (req: any, res: any, next: any) => {
+  (next: NextFunction) => {
     // res.send("User data save successfully");
     next();
   },
-  (req: any, res: any, next: any) => {
+  (res: Response) => {
     res.send("User data save successfully 2");
     // next();
   },
-  (req: any, res: any) => {
+  (res: Response) => {
     res.send("User data save successfully 3");
     // next();
   }
