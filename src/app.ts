@@ -8,8 +8,15 @@ app.use("/test", (req: any, res: any) => {
 });
 
 // GET API call - only handle GET call to '/user'
+
 app.get("/user", (req: any, res: any) => {
-  res.send("User data will be returned here");
+  console.log(req.query);
+  res.send({ firstName: "Prashant", lastName: "Tayal" });
+});
+
+app.get("/user/:userId", (req: any, res: any) => {
+  console.log("userID", req.params);
+  res.send({ firstName: "Prashant", lastName: "Tayal" });
 });
 
 // POST API call - only handle POST call to '/user'
