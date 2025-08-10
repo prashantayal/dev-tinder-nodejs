@@ -3,13 +3,60 @@ const connectDB = require("./config/database");
 import type { Request, Response } from "express";
 const UserModel = require("./models/userModel");
 
+interface SignupRequest extends Request {
+  body: {
+    firstName: string;
+    lastName: string;
+    emailID: string;
+    password: string;
+  };
+}
+
 const app = express();
 
 // MIDDLEWARE - read request and response in the form of json for all the routes
 app.use(express.json());
 
-app.post("/signup", async (req: Request, res: Response) => {
-  // Creating a new instance of the UserModel
+// Get a user data
+app.get("/user", async (req: Request, res: Response) => {
+  const userEmail = req.body.emailID;
+
+  try {
+    const users = await UserModel.find({ emailID: userEmail });
+
+    if (users.length === 0) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(users[0]);
+    }
+  } catch (err) {
+    res.status(404).send("Something went wrong");
+  }
+});
+
+// Get all users
+app.get("/feed", async (req: Request, res: Response) => {
+  try {
+    const users = await UserModel.find({});
+
+    if (users.length === 0) {
+      res.status(404).send("Users not found");
+    } else {
+      res.send(users);
+    }
+  } catch (err) {
+    res.status(404).send("Something went wrong");
+  }
+});
+
+// Signup user
+app.post("/signup", async (req: SignupRequest, res: Response) => {
+  const { firstName, lastName, emailID, password } = req.body;
+
+  if (!firstName || !lastName || !emailID || !password) {
+    return res.status(400).send("All fields are required.");
+  }
+
   const user = new UserModel(req.body);
 
   try {
