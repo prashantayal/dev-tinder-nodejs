@@ -49,6 +49,23 @@ app.get("/feed", async (req: Request, res: Response) => {
   }
 });
 
+// Delete user
+app.delete("/user", async (req: Request, res: Response) => {
+  try {
+    const id = req.body.userID;
+    const user = await UserModel.findById(id);
+
+    if (!user) {
+      res.status(404).send("User not found!");
+    } else {
+      await UserModel.findByIdAndDelete(id);
+      res.send("User Deleted Successfully");
+    }
+  } catch (err) {
+    res.status(404).send("Something went wrong");
+  }
+});
+
 // Signup user
 app.post("/signup", async (req: SignupRequest, res: Response) => {
   const { firstName, lastName, emailID, password } = req.body;
@@ -57,11 +74,17 @@ app.post("/signup", async (req: SignupRequest, res: Response) => {
     return res.status(400).send("All fields are required.");
   }
 
-  const user = new UserModel(req.body);
-
   try {
-    await user.save();
-    res.send("User Added Successfully");
+    const existingUser = await UserModel.findOne({ emailID: emailID });
+
+    if (existingUser) {
+      res.status(401).send("Cannot Signup, email ID is already taken");
+    } else {
+      const user = new UserModel(req.body);
+
+      await user.save();
+      res.send("User Added Successfully");
+    }
   } catch (err: any) {
     res.status(400).send("Error saving the user" + err.message);
   }
