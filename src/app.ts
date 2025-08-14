@@ -1,42 +1,79 @@
 const express = require("express");
 const connectDB = require("./config/database");
 import type { Request, Response } from "express";
-const UserModel = require("./models/userModel");
+import type { SignupRequest, UpdateUserRequest } from "./utils/interfaces";
+const User = require("./models/user.model");
+import bcrypt = require("bcrypt");
+import type userModel = require("./models/user.model");
 
-interface SignupRequest extends Request {
-  body: {
-    firstName: string;
-    lastName: string;
-    emailID: string;
-    password: string;
-  };
-}
-
-interface UpdateUserRequest extends Request {
-  body: {
-    id?: string;
-    firstName?: string;
-    lastName?: string;
-    emailID?: string;
-  };
-}
+const { validateSignupData } = require("./utils/validation");
 
 const app = express();
 
 // MIDDLEWARE - read request and response in the form of json for all the routes
 app.use(express.json());
 
+// Signup user
+app.post("/signup", async (req: SignupRequest, res: Response) => {
+  try {
+    // 1. Validate the incoming data
+    validateSignupData(req);
+
+    // 2. Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(req.body.password, saltRounds);
+
+    // 3. Store into DB (with hashed password)
+    const user = new User({
+      ...req.body,
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    res.send("User Added Successfully");
+  } catch (err: any) {
+    res.status(400).send(`ERROR: ${err.message}`);
+  }
+});
+
+// Login user
+app.post("/login", async (req: Request, res: Response) => {
+  try {
+    const { emailID, password } = req.body;
+
+    const user = await User.findOne({ emailID: emailID }).select("+password");
+    // res.send(user);
+
+    if (!user) {
+      res.status(404).send("User not found");
+    } else {
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+      if (isPasswordValid) {
+        const userWithoutPassword = user.toObject();
+        delete userWithoutPassword.password;
+
+        res.send(userWithoutPassword);
+      } else {
+        res.status(404).send("Not Authorised");
+      }
+    }
+  } catch (err: any) {
+    res.status(404).send("Login Error: " + err.message);
+  }
+});
+
 // Get a user data
 app.get("/user", async (req: Request, res: Response) => {
   const userEmail = req.body.emailID;
 
   try {
-    const users = await UserModel.find({ emailID: userEmail });
+    const user = await User.findOne({ emailID: userEmail });
 
-    if (users.length === 0) {
+    if (!user) {
       res.status(404).send("User not found");
     } else {
-      res.send(users[0]);
+      res.send(user);
     }
   } catch (err) {
     res.status(404).send("Something went wrong");
@@ -46,7 +83,7 @@ app.get("/user", async (req: Request, res: Response) => {
 // Get all users
 app.get("/feed", async (req: Request, res: Response) => {
   try {
-    const users = await UserModel.find({});
+    const users = await User.find({});
 
     if (users.length === 0) {
       res.status(404).send("Users not found");
@@ -59,11 +96,21 @@ app.get("/feed", async (req: Request, res: Response) => {
 });
 
 // Update user
-app.patch("/user", async (req: UpdateUserRequest, res: Response) => {
-  try {
-    const id = req.body.id;
+app.patch("/user/:id", async (req: UpdateUserRequest, res: Response) => {
+  const id = req.params?.id;
 
-    await UserModel.findByIdAndUpdate(id, req.body, { runValidators: true });
+  try {
+    const ALLOWED_UPDATES = ["photoUrl", "about", "gender", "age"];
+
+    const isUpdateAllowed = Object.keys(req.body).every((key) =>
+      ALLOWED_UPDATES.includes(key)
+    );
+
+    if (!isUpdateAllowed) {
+      res.status(404).send("Update not Allowed");
+    }
+
+    await User.findByIdAndUpdate(id, req.body, { runValidators: true });
     res.send("User Updated Successfully");
   } catch (err: any) {
     res.status(404).send("Something went wrong " + err.message);
@@ -71,26 +118,14 @@ app.patch("/user", async (req: UpdateUserRequest, res: Response) => {
 });
 
 // Delete user
-app.delete("/user", async (req: Request, res: Response) => {
-  try {
-    const id = req.body.id;
+app.delete("/user/:id", async (req: Request, res: Response) => {
+  const id = req.params?.id;
 
-    await UserModel.findByIdAndDelete(id);
+  try {
+    await User.findByIdAndDelete(id);
     res.send("User Deleted Successfully");
   } catch (err) {
     res.status(404).send("Something went wrong");
-  }
-});
-
-// Signup user
-app.post("/signup", async (req: SignupRequest, res: Response) => {
-  try {
-    const user = new UserModel(req.body);
-
-    await user.save();
-    res.send("User Added Successfully");
-  } catch (err: any) {
-    res.status(400).send("Error saving the user" + err.message);
   }
 });
 

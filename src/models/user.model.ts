@@ -1,10 +1,23 @@
-import console = require("console");
-
-const mongoose = require("mongoose");
+import mongoose = require("mongoose");
+import validator = require("validator");
 
 const { Schema, model } = mongoose;
 
-const userSchema = new Schema(
+interface IUser extends mongoose.Document {
+  firstName: string;
+  lastName?: string;
+  emailID: string;
+  password: string;
+  age?: number;
+  gender?: "Male" | "Female" | "Other";
+  photoUrl?: string;
+  about?: string;
+  skills?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const userSchema = new Schema<IUser>(
   {
     firstName: {
       type: String,
@@ -12,13 +25,11 @@ const userSchema = new Schema(
       trim: true,
       minlength: 2,
       maxlength: 50,
-      match: [/^[a-zA-Z]+$/, "First name must only contain letters"],
     },
     lastName: {
       type: String,
       trim: true,
       maxlength: 50,
-      match: [/^[a-zA-Z]+$/, "Last name must only contain letters"],
     },
     emailID: {
       type: String,
@@ -26,13 +37,20 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
       immutable: true,
+      validate: {
+        validator: (value: string) => validator.isEmail(value),
+        message: (props: any) => `${props.value}`,
+      },
     },
     password: {
       type: String,
       required: true,
       select: false,
+      validate: {
+        validator: (value: string) => validator.isStrongPassword(value),
+        message: (props: any) => `${props.value}`,
+      },
     },
     age: {
       type: Number,
@@ -41,19 +59,15 @@ const userSchema = new Schema(
     gender: {
       type: String,
       enum: ["Male", "Female", "Other"],
-
-      // Default - This method is called only when a new document is created
-      validate(value: string) {
-        if (!["Male", "Female", "Other"].includes(value)) {
-          throw new Error("Gender is not valid");
-        }
-      },
     },
     photoUrl: {
       type: String,
       default:
         "https://cdn.vectorstock.com/i/500p/46/76/gray-male-head-placeholder-vector-23804676.jpg",
-      match: [/^(https?|ftp):\/\/[^\s/$.?#].[^\s]*$/i, "Invalid URL"],
+      validate: {
+        validator: (value: string) => validator.isURL(value),
+        message: (props: any) => `${props.value}`,
+      },
     },
     about: {
       type: String,
@@ -65,7 +79,9 @@ const userSchema = new Schema(
       type: [String],
     },
   },
-  { timestamps: true } // provides createdAt, updatedAt automatically
+  { timestamps: true }
 );
 
-module.exports = model("User", userSchema);
+const User = model<IUser>("User", userSchema);
+
+module.exports = User;
