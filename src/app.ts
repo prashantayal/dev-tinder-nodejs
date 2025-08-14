@@ -12,6 +12,15 @@ interface SignupRequest extends Request {
   };
 }
 
+interface UpdateUserRequest extends Request {
+  body: {
+    id?: string;
+    firstName?: string;
+    lastName?: string;
+    emailID?: string;
+  };
+}
+
 const app = express();
 
 // MIDDLEWARE - read request and response in the form of json for all the routes
@@ -49,18 +58,25 @@ app.get("/feed", async (req: Request, res: Response) => {
   }
 });
 
+// Update user
+app.patch("/user", async (req: UpdateUserRequest, res: Response) => {
+  try {
+    const id = req.body.id;
+
+    await UserModel.findByIdAndUpdate(id, req.body, { runValidators: true });
+    res.send("User Updated Successfully");
+  } catch (err: any) {
+    res.status(404).send("Something went wrong " + err.message);
+  }
+});
+
 // Delete user
 app.delete("/user", async (req: Request, res: Response) => {
   try {
-    const id = req.body.userID;
-    const user = await UserModel.findById(id);
+    const id = req.body.id;
 
-    if (!user) {
-      res.status(404).send("User not found!");
-    } else {
-      await UserModel.findByIdAndDelete(id);
-      res.send("User Deleted Successfully");
-    }
+    await UserModel.findByIdAndDelete(id);
+    res.send("User Deleted Successfully");
   } catch (err) {
     res.status(404).send("Something went wrong");
   }
@@ -68,23 +84,11 @@ app.delete("/user", async (req: Request, res: Response) => {
 
 // Signup user
 app.post("/signup", async (req: SignupRequest, res: Response) => {
-  const { firstName, lastName, emailID, password } = req.body;
-
-  if (!firstName || !lastName || !emailID || !password) {
-    return res.status(400).send("All fields are required.");
-  }
-
   try {
-    const existingUser = await UserModel.findOne({ emailID: emailID });
+    const user = new UserModel(req.body);
 
-    if (existingUser) {
-      res.status(401).send("Cannot Signup, email ID is already taken");
-    } else {
-      const user = new UserModel(req.body);
-
-      await user.save();
-      res.send("User Added Successfully");
-    }
+    await user.save();
+    res.send("User Added Successfully");
   } catch (err: any) {
     res.status(400).send("Error saving the user" + err.message);
   }
@@ -93,12 +97,12 @@ app.post("/signup", async (req: SignupRequest, res: Response) => {
 (async () => {
   try {
     await connectDB();
-    console.log("Connected to MongoDB");
+    console.log("Connected to MongoDB ✅");
 
     app.listen(8000, () => {
-      console.log("Server is up and running...");
+      console.log("Server is up and running 🚀");
     });
   } catch (error) {
-    console.error("Couldn't connect to the Database", error);
+    console.error("Couldn't connect to the Database ❌", error);
   }
 })();
