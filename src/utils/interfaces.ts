@@ -1,4 +1,5 @@
 import type { Request } from "express";
+import type { JwtPayload } from "jsonwebtoken";
 
 export interface SignupRequest extends Request {
   body: {
@@ -16,4 +17,8 @@ export interface UpdateUserRequest extends Request {
     lastName?: string;
     emailID?: string;
   };
+}
+
+export interface MyJwtPayload extends JwtPayload {
+  _id: string;
 }

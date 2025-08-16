@@ -1,17 +1,23 @@
 const express = require("express");
 const connectDB = require("./config/database");
 import type { Request, Response } from "express";
-import type { SignupRequest, UpdateUserRequest } from "./utils/interfaces";
+import type {
+  SignupRequest,
+  UpdateUserRequest,
+  MyJwtPayload,
+} from "./utils/interfaces";
 const User = require("./models/user.model");
 import bcrypt = require("bcrypt");
-import type userModel = require("./models/user.model");
-
 const { validateSignupData } = require("./utils/validation");
+import jwt = require("jsonwebtoken");
+import cookieParser = require("cookie-parser");
 
 const app = express();
 
 // MIDDLEWARE - read request and response in the form of json for all the routes
 app.use(express.json());
+// Use cookie-parser middleware
+app.use(cookieParser());
 
 // Signup user
 app.post("/signup", async (req: SignupRequest, res: Response) => {
@@ -43,7 +49,6 @@ app.post("/login", async (req: Request, res: Response) => {
     const { emailID, password } = req.body;
 
     const user = await User.findOne({ emailID: emailID }).select("+password");
-    // res.send(user);
 
     if (!user) {
       res.status(404).send("User not found");
@@ -52,6 +57,11 @@ app.post("/login", async (req: Request, res: Response) => {
       if (isPasswordValid) {
         const userWithoutPassword = user.toObject();
         delete userWithoutPassword.password;
+
+        // create JWT token
+        const token = jwt.sign({ _id: user._id }, "B2.2355.vk");
+        // add token to the cookie
+        res.cookie("token", token);
 
         res.send(userWithoutPassword);
       } else {
@@ -63,12 +73,14 @@ app.post("/login", async (req: Request, res: Response) => {
   }
 });
 
-// Get a user data
-app.get("/user", async (req: Request, res: Response) => {
-  const userEmail = req.body.emailID;
+// Get profile data
+app.get("/profile", async (req: Request, res: Response) => {
+  const { token } = req.cookies;
+  const decodedToken = jwt.verify(token, "B2.2355.vk") as MyJwtPayload;
+  console.log("user id:", decodedToken._id);
 
   try {
-    const user = await User.findOne({ emailID: userEmail });
+    const user = await User.findById(decodedToken._id);
 
     if (!user) {
       res.status(404).send("User not found");
