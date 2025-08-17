@@ -1,21 +1,10 @@
 import mongoose = require("mongoose");
 import validator = require("validator");
+import type { IUser } from "./user.type";
+import jwt = require("jsonwebtoken");
+import bcrypt = require("bcrypt");
 
 const { Schema, model } = mongoose;
-
-interface IUser extends mongoose.Document {
-  firstName: string;
-  lastName?: string;
-  emailID: string;
-  password: string;
-  age?: number;
-  gender?: "Male" | "Female" | "Other";
-  photoUrl?: string;
-  about?: string;
-  skills?: string[];
-  createdAt?: Date;
-  updatedAt?: Date;
-}
 
 const userSchema = new Schema<IUser>(
   {
@@ -81,6 +70,29 @@ const userSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
+
+// userSchema.methods doesn't work with () => {} (arrow function)
+
+// Create JWT token
+userSchema.methods.getJWT = function () {
+  const user = this;
+
+  const token = jwt.sign({ _id: user._id }, "B2.2355.vk", {
+    expiresIn: "30d",
+  });
+
+  return token;
+};
+
+// Validate password
+userSchema.methods.checkPassword = async function (inputPassword: string) {
+  const user = this;
+  const passwordHash = user.password;
+
+  const isPasswordValid = await bcrypt.compare(inputPassword, passwordHash);
+
+  return isPasswordValid;
+};
 
 const User = model<IUser>("User", userSchema);
 

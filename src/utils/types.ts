@@ -1,6 +1,10 @@
 import type { Request } from "express";
 import type { JwtPayload } from "jsonwebtoken";
+import type userType = require("../models/user.type");
 
+export interface AuthRequest extends Request {
+  user?: userType.IUser;
+}
 export interface SignupRequest extends Request {
   body: {
     firstName: string;
@@ -9,16 +13,10 @@ export interface SignupRequest extends Request {
     password: string;
   };
 }
-
 export interface UpdateUserRequest extends Request {
-  body: {
-    id?: string;
-    firstName?: string;
-    lastName?: string;
-    emailID?: string;
-  };
+  user?: userType.IUser;
+  body: Partial<userType.IUser>;
 }
-
 export interface MyJwtPayload extends JwtPayload {
   _id: string;
 }
