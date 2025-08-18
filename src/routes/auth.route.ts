@@ -1,10 +1,6 @@
 import express = require("express");
 import type { Request, Response } from "express";
-import type {
-  AuthRequest,
-  SignupRequest,
-  UpdateUserRequest,
-} from "../utils/types";
+import type { SignupRequest } from "../utils/types";
 const { validateSignupData } = require("../utils/validation");
 import bcrypt = require("bcrypt");
 const User = require("../models/user.model");
@@ -34,7 +30,6 @@ authRouter.post("/signup", async (req: SignupRequest, res: Response) => {
     res.status(400).send(`ERROR: ${err.message}`);
   }
 });
-// #endregion
 
 // #region Login
 authRouter.post("/login", async (req: Request, res: Response) => {
@@ -65,13 +60,11 @@ authRouter.post("/login", async (req: Request, res: Response) => {
     res.status(404).send("Login Error: " + err.message);
   }
 });
-// #endregion
 
 // #region Logout
 authRouter.post("/logout", async (req: Request, res: Response) => {
   res.clearCookie("token");
   res.send("Logged out successfully");
 });
-// #endregion
 
 module.exports = authRouter;

@@ -1,10 +1,8 @@
 import express = require("express");
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import type { AuthRequest, UpdateUserRequest } from "../utils/types";
 const { userAuth } = require("../middleware/auth.middleware");
-const User = require("../models/user.model");
 const { validateProfileEditData } = require("../utils/validation");
-import type userType = require("../models/user.type");
 
 const profileRouter = express.Router();
 
@@ -26,7 +24,6 @@ profileRouter.get(
     }
   }
 );
-// #endregion
 
 // #region Edit
 profileRouter.patch(
@@ -55,6 +52,5 @@ profileRouter.patch(
     }
   }
 );
-// #endregion
 
 module.exports = profileRouter;

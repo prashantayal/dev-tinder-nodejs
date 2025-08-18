@@ -1,11 +1,27 @@
 import mongoose = require("mongoose");
 import validator = require("validator");
-import type { IUser } from "./user.type";
 import jwt = require("jsonwebtoken");
 import bcrypt = require("bcrypt");
 
 const { Schema, model } = mongoose;
 
+// #region IUser
+export interface IUser extends mongoose.Document {
+  _id: mongoose.Schema.Types.ObjectId;
+  firstName: string;
+  lastName?: string;
+  emailID: string;
+  password: string;
+  age?: number;
+  gender?: "Male" | "Female" | "Other";
+  photoUrl?: string;
+  about?: string;
+  skills?: string[];
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+// #region userSchema
 const userSchema = new Schema<IUser>(
   {
     firstName: {
@@ -72,7 +88,6 @@ const userSchema = new Schema<IUser>(
 );
 
 // userSchema.methods doesn't work with () => {} (arrow function)
-
 // Create JWT token
 userSchema.methods.getJWT = function () {
   const user = this;

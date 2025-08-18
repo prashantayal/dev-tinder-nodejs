@@ -1,6 +1,6 @@
 import type { Request } from "express";
 import type { JwtPayload } from "jsonwebtoken";
-import type userType = require("../models/user.type");
+import type userType = require("../models/user.model");
 
 export interface AuthRequest extends Request {
   user?: userType.IUser;
