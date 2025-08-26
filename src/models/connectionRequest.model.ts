@@ -2,7 +2,7 @@ import mongoose = require("mongoose");
 const { Schema, model } = mongoose;
 
 // #region IConnectionRequest
-interface IConnectionRequest extends mongoose.Document {
+export interface IConnectionRequest extends mongoose.Document {
   _id: mongoose.Schema.Types.ObjectId;
   fromUserId: mongoose.Schema.Types.ObjectId;
   toUserId: mongoose.Schema.Types.ObjectId;
