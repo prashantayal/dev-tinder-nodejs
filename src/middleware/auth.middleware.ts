@@ -1,6 +1,6 @@
-import type { Request, Response, NextFunction } from "express";
+import type { NextFunction, Response } from "express";
+import type { AuthRequest, MyJwtPayload } from "../utils/types";
 import jwt = require("jsonwebtoken");
-import type { MyJwtPayload, AuthRequest } from "../utils/types";
 const User = require("../models/user.model");
 
 const userAuth = async (

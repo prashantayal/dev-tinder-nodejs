@@ -36,22 +36,25 @@ authRouter.post("/login", async (req: Request, res: Response) => {
   try {
     const { emailID, password } = req.body;
 
-    const user = await User.findOne({ emailID: emailID }).select("+password");
+    const foundUser = await User.findOne({ emailID: emailID }).select(
+      "+password"
+    );
 
-    if (!user) {
+    if (!foundUser) {
       res.status(404).send("User not found");
     } else {
-      const isPasswordValid = user.checkPassword(password);
+      const isPasswordValid = await foundUser.checkPassword(password);
+
       if (isPasswordValid) {
-        const userWithoutPassword = user.toObject();
-        delete userWithoutPassword.password;
+        const user = foundUser.toObject();
+        delete user.password;
 
         // get new JWT token created in userSchema
-        const token = user.getJWT();
+        const token = foundUser.getJWT();
         // add token to the cookie
         res.cookie("token", token);
 
-        res.send(userWithoutPassword);
+        res.send(user);
       } else {
         res.status(404).send("Not Authorised");
       }

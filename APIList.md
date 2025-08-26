@@ -15,12 +15,10 @@
 ### connectionRequestRouter
 
 - POST /request/send/:status/:toUserId
-- POST /request/send/ignore/:userId
-- POST /request/review/accept/:userId
-- POST /request/review/reject/:userId
+- POST /request/review/:status/:userId
 
 ### userRouter
 
-- POST /user/connections
 - GET /user/request/received
+- GET /user/connections
 - GET /user/feed (Gets profile of other users on the platform)

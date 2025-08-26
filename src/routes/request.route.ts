@@ -9,7 +9,7 @@ const User = require("../models/user.model");
 
 const requestRouter = express.Router();
 
-// #region Send request
+// #region Send Request
 requestRouter.post(
   "/request/send/:status/:toUserId",
   userAuth,
@@ -50,10 +50,57 @@ requestRouter.post(
       });
 
       const data = await connectionRequest.save();
-      res.json({ message: "Connection Request Sent Successfully", data });
+      res.json({
+        message: `Connection ${status.toUpperCase()} Sent Successfully`,
+        data,
+      });
     } catch (err: any) {
       res.status(400).json({
         error: err.message,
+      });
+    }
+  }
+);
+
+// #region Request Review
+requestRouter.post(
+  "/request/review/:status/:requestId",
+  userAuth,
+  async (req: AuthRequest, res: Response) => {
+    try {
+      const loggedInUser = req.user;
+      const { status, requestId } = req.params;
+
+      const allowedStatus = ["accepted", "rejected"];
+      if (!allowedStatus.includes(status ?? "")) {
+        return res.status(400).json({
+          message: "Inavlid status: Should be either accepted or rejected",
+        });
+      }
+
+      const connectRequest = await ConnectionRequest.findOne({
+        _id: requestId,
+        toUserId: loggedInUser?._id,
+        status: "interested",
+      });
+
+      if (!connectRequest) {
+        return res.status(400).json({
+          message: "Connection request not found!",
+        });
+      }
+
+      connectRequest.status = status;
+
+      const data = await connectRequest.save();
+
+      res.json({
+        message: "Connection Request " + status?.toLocaleUpperCase(),
+        data,
+      });
+    } catch (err: any) {
+      res.status(400).json({
+        message: err.message,
       });
     }
   }

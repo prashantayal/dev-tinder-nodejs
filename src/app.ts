@@ -6,6 +6,7 @@ import cookieParser = require("cookie-parser");
 const authRouter = require("./routes/auth.route");
 const profileRouter = require("./routes/profile.route");
 const requestRouter = require("./routes/request.route");
+const userRouter = require("./routes/user.route");
 
 const app = express();
 // MIDDLEWARE - read request and response in the form of json for all the routes
@@ -17,6 +18,7 @@ app.use(cookieParser());
 app.use("/", authRouter);
 app.use("/", profileRouter);
 app.use("/", requestRouter);
+app.use("/", userRouter);
 
 (async () => {
   try {

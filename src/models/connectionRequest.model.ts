@@ -41,10 +41,8 @@ const connectionRequestSchema = new Schema<IConnectionRequest>(
   { timestamps: true }
 );
 
-// ✅ Compound index to prevent duplicate requests in the same direction
 connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 }, { unique: true });
 
-// ✅ Self-request prevention
 connectionRequestSchema.pre("validate", function (next) {
   if (this.fromUserId.toString() === this.toUserId.toString()) {
     return next(new Error("You cannot send a request to yourself"));
@@ -52,8 +50,11 @@ connectionRequestSchema.pre("validate", function (next) {
   next();
 });
 
-// ✅ Prevent reverse duplicate requests (A→B and B→A)
 connectionRequestSchema.pre("save", async function (next) {
+  if (!this.isNew) {
+    return next();
+  }
+
   const existing = await mongoose.model("ConnectionRequest").findOne({
     $or: [
       { fromUserId: this.fromUserId, toUserId: this.toUserId },
